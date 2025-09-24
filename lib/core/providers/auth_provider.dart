@@ -48,12 +48,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update profile (name + notifications)
-  Future<void> updateProfile(String name, bool notificationsEnabled) async {
+  /// Update profile (name + notifications + photoURL)
+  Future<void> updateProfile(String name, bool notificationsEnabled, {String? photoURL}) async {
     if (_user != null) {
       await _authService.updateUserProfile(_user!.uid, {
         'username': name,
         'notificationsEnabled': notificationsEnabled,
+        if (photoURL != null) 'photoURL': photoURL,
       });
 
       // Update local copy
@@ -63,7 +64,7 @@ class AuthProvider with ChangeNotifier {
         role: _user!.role,
         username: name,
         notificationsEnabled: notificationsEnabled,
-        photoURL: _user!.photoURL,
+        photoURL: photoURL ?? _user!.photoURL,
       );
 
       notifyListeners();
