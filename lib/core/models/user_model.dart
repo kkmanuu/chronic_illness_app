@@ -7,6 +7,8 @@ class UserModel {
   final String username;
   final bool notificationsEnabled;
   final String? photoURL;
+  final DateTime? createdAt;
+  final Timestamp? premiumExpiry;
 
   UserModel({
     required this.uid,
@@ -15,6 +17,8 @@ class UserModel {
     required this.username,
     this.notificationsEnabled = true,
     this.photoURL,
+    this.createdAt,
+    this.premiumExpiry,
   });
 
   /// Display name (maps to username for UI purposes)
@@ -35,6 +39,8 @@ class UserModel {
       'username': username,
       'notificationsEnabled': notificationsEnabled,
       'photoURL': photoURL,
+      'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
+      'premiumExpiry': premiumExpiry,
     };
   }
 
@@ -50,6 +56,8 @@ class UserModel {
       username: data['username'] ?? 'Anonymous User',
       notificationsEnabled: data['notificationsEnabled'] ?? true,
       photoURL: data['photoURL'],
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      premiumExpiry: data['premiumExpiry'] as Timestamp?,
     );
   }
 
