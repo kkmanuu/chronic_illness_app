@@ -1,56 +1,27 @@
-import 'dart:io';
-import 'package:chronic_illness_app/features/profile/screens/profile_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:chronic_illness_app/core/providers/auth_provider.dart';
+import 'package:chronic_illness_app/features/profile/screens/widgets/profile_form.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 Widget buildAvatar(
   BuildContext context,
-  File? selectedImage,
   String? profileImageUrl,
   VoidCallback pickProfileImage,
 ) {
-  Widget avatarContent;
-  if (selectedImage != null) {
-    avatarContent = ClipOval(
-      child: Image.file(
-        selectedImage,
-        width: 84,
-        height: 84,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => buildInitialAvatar(context),
-      ),
-    );
-  } else if (profileImageUrl != null) {
-    avatarContent = ClipOval(
-      child: Image.network(
-        profileImageUrl,
-        width: 84,
-        height: 84,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => buildInitialAvatar(context),
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return buildInitialAvatar(context);
-        },
-      ),
-    );
-  } else {
-    avatarContent = buildInitialAvatar(context);
-  }
-
   return GestureDetector(
     onTap: pickProfileImage,
     child: Container(
-      decoration: BoxShadow(
-        color: Colors.black.withOpacity(0.2),
-        blurRadius: 15,
-        offset: const Offset(0, 8),
-      ).let((shadow) => BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [shadow],
-          )),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: CircleAvatar(
         radius: 45,
         backgroundColor: Colors.white,
@@ -59,7 +30,24 @@ Widget buildAvatar(
             CircleAvatar(
               radius: 42,
               backgroundColor: const Color(0xFF4CAF50).withOpacity(0.1),
-              child: avatarContent,
+              child: ClipOval(
+                child: profileImageUrl != null
+                    ? Image.network(
+                        '$profileImageUrl?cache=${DateTime.now().millisecondsSinceEpoch}', // Cache-busting
+                        width: 84,
+                        height: 84,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => buildInitialAvatar(context),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return const CircularProgressIndicator(
+                            color: Color(0xFF4CAF50),
+                            strokeWidth: 2,
+                          );
+                        },
+                      )
+                    : buildInitialAvatar(context),
+              ),
             ),
             Positioned(
               bottom: 0,
@@ -329,35 +317,31 @@ Widget buildTransactionTile(
 Widget buildProfileInfo(
   BuildContext context,
   AuthProvider authProvider,
-  StateSetter setState,
+  VoidCallback onEditPressed,
 ) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       _buildInfoRow('Name', authProvider.user!.username),
-      const SizedBox(height: 16),
+      const SizedBox(height: 20),
       _buildInfoRow('Email', authProvider.user!.email ?? 'Not set'),
-      const SizedBox(height: 16),
+      const SizedBox(height: 20),
       _buildInfoRow('Member Since', DateFormat('MMMM yyyy').format(
         authProvider.user!.createdAt ?? DateTime.now())),
-      const SizedBox(height: 16),
+      const SizedBox(height: 20),
       _buildInfoRow('Account Type', authProvider.user!.role == 'premium' 
           ? 'Premium Member' 
           : 'Free Member'),
       if (authProvider.user!.role == 'premium' && authProvider.user!.premiumExpiry != null) ...[
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         _buildInfoRow('Premium Expires', DateFormat('MMM dd, yyyy').format(
           authProvider.user!.premiumExpiry!.toDate())),
       ],
-      const SizedBox(height: 20),
+      const SizedBox(height: 24),
       SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          onPressed: () {
-            setState(() {
-              // Assuming _isEditingProfile is managed in the parent state
-            });
-          },
+          onPressed: onEditPressed,
           icon: const Icon(Icons.edit, color: Color(0xFF4CAF50)),
           label: const Text('Edit Profile'),
           style: OutlinedButton.styleFrom(
@@ -407,189 +391,40 @@ Widget buildEditProfileForm(
   BuildContext context,
   AuthProvider authProvider,
   bool isEditingProfile,
-  StateSetter parentSetState,
+  VoidCallback onCancel,
 ) {
-  final nameController = TextEditingController(text: authProvider.user!.username);
-  final emailController = TextEditingController(text: authProvider.user!.email ?? '');
-  bool notificationsEnabled = authProvider.user!.notificationsEnabled;
-
-  return StatefulBuilder(
-    builder: (context, setState) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextFormField(
-            controller: nameController,
-            decoration: InputDecoration(
-              labelText: 'Full Name',
-              prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF4CAF50)),
-              border: OutlineInputBorder(
+  return ProfileForm(
+    initialName: authProvider.user!.username,
+    initialNotificationsEnabled: authProvider.user!.notificationsEnabled,
+    onSave: (name, notificationsEnabled) async {
+      try {
+        await authProvider.updateProfile(
+          name,
+          notificationsEnabled,
+          profileImageUrl: authProvider.user!.profileImageUrl, // Preserve existing profileImageUrl
+        );
+        onCancel(); // Close edit mode
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text('Error updating profile: $e')),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF4CAF50)),
-              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          TextFormField(
-            controller: emailController,
-            decoration: InputDecoration(
-              labelText: 'Email Address',
-              prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF4CAF50)),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF4CAF50)),
-              ),
-              enabled: false,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.notifications_outlined, color: Color(0xFF4CAF50)),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Enable Notifications',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF2D3748),
-                    ),
-                  ),
-                ),
-                Switch(
-                  value: notificationsEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      notificationsEnabled = value;
-                    });
-                  },
-                  activeColor: const Color(0xFF4CAF50),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    parentSetState(() {
-                      // Assuming _isEditingProfile is managed in the parent state
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey[600],
-                    side: BorderSide(color: Colors.grey[300]!),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.error_outline, color: Colors.white),
-                              SizedBox(width: 12),
-                              Text('Name cannot be empty'),
-                            ],
-                          ),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-
-                    try {
-                      await authProvider.updateProfile(
-                        nameController.text.trim(),
-                        notificationsEnabled,
-                      );
-
-                      parentSetState(() {
-                        // Assuming _isEditingProfile is managed in the parent state
-                      });
-
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Row(
-                              children: [
-                                Icon(Icons.check_circle_outline, color: Colors.white),
-                                SizedBox(width: 12),
-                                Text('Profile updated successfully'),
-                              ],
-                            ),
-                            backgroundColor: const Color(0xFF4CAF50),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.error_outline, color: Colors.white),
-                                const SizedBox(width: 12),
-                                Expanded(child: Text('Error updating profile: $e')),
-                              ],
-                            ),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        );
-                      }
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Save Changes'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    },
+          );
+        }
+      }
+    }, 
+    setStateCallback: onCancel,
   );
 }
