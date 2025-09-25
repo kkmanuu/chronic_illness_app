@@ -85,7 +85,7 @@ class AuthProvider with ChangeNotifier {
           role: _user!.role,
           username: name,
           notificationsEnabled: notificationsEnabled,
-          photoURL: _user!.photoURL,
+          profileImageUrl: _user!.profileImageUrl,
         );
 
         notifyListeners();
@@ -124,7 +124,7 @@ class AuthProvider with ChangeNotifier {
             role: 'admin',
             username: _user!.username,
             notificationsEnabled: _user!.notificationsEnabled,
-            photoURL: _user!.photoURL,
+            profileImageUrl: _user!.profileImageUrl,
           );
         }
       } catch (e) {
