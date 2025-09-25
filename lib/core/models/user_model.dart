@@ -6,7 +6,9 @@ class UserModel {
   final String role;
   final String username;
   final bool notificationsEnabled;
-  final String? photoURL;
+  final String? profileImageUrl;
+  final String? phone;
+  final String? bio;
   final DateTime? createdAt;
   final Timestamp? premiumExpiry;
 
@@ -16,7 +18,9 @@ class UserModel {
     required this.role,
     required this.username,
     this.notificationsEnabled = true,
-    this.photoURL,
+    this.profileImageUrl,
+    this.phone,
+    this.bio,
     this.createdAt,
     this.premiumExpiry,
   });
@@ -38,7 +42,9 @@ class UserModel {
       'role': role,
       'username': username,
       'notificationsEnabled': notificationsEnabled,
-      'photoURL': photoURL,
+      'profileImageUrl': profileImageUrl,
+      'phone': phone,
+      'bio': bio,
       'createdAt': createdAt != null ? Timestamp.fromDate(createdAt!) : null,
       'premiumExpiry': premiumExpiry,
     };
@@ -55,7 +61,9 @@ class UserModel {
       role: data['role'] ?? 'user',
       username: data['username'] ?? 'Anonymous User',
       notificationsEnabled: data['notificationsEnabled'] ?? true,
-      photoURL: data['photoURL'],
+      profileImageUrl: data['profileImageUrl'],
+      phone: data['phone'],
+      bio: data['bio'],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       premiumExpiry: data['premiumExpiry'] as Timestamp?,
     );
