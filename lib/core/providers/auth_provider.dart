@@ -48,13 +48,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update profile (name + notifications + photoURL)
-  Future<void> updateProfile(String name, bool notificationsEnabled, {String? photoURL}) async {
+  /// Update profile (name + notifications + profileImageUrl)
+  Future<void> updateProfile(String name, bool notificationsEnabled, {String? profileImageUrl}) async {
     if (_user != null) {
       await _authService.updateUserProfile(_user!.uid, {
         'username': name,
         'notificationsEnabled': notificationsEnabled,
-        if (photoURL != null) 'photoURL': photoURL,
+        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       });
 
       // Update local copy
@@ -64,7 +64,9 @@ class AuthProvider with ChangeNotifier {
         role: _user!.role,
         username: name,
         notificationsEnabled: notificationsEnabled,
-        photoURL: photoURL ?? _user!.photoURL,
+        profileImageUrl: profileImageUrl ?? _user!.profileImageUrl,
+        phone: _user!.phone,
+        bio: _user!.bio,
       );
 
       notifyListeners();
@@ -88,8 +90,33 @@ class AuthProvider with ChangeNotifier {
         role: 'premium',
         username: _user!.username,
         notificationsEnabled: _user!.notificationsEnabled,
-        photoURL: _user!.photoURL,
+        profileImageUrl: _user!.profileImageUrl,
+        phone: _user!.phone,
+        bio: _user!.bio,
       );
+      notifyListeners();
+    }
+  }
+
+  /// Update user profile with multiple fields
+  Future<void> updateUserProfile(Map<String, dynamic> updates) async {
+    if (_user != null) {
+      await _authService.updateUserProfile(_user!.uid, updates);
+
+      // Update local copy
+      _user = UserModel(
+        uid: _user!.uid,
+        email: updates['email'] ?? _user!.email,
+        role: _user!.role,
+        username: updates['username'] ?? _user!.username,
+        notificationsEnabled: updates['notificationsEnabled'] ?? _user!.notificationsEnabled,
+        profileImageUrl: updates['profileImageUrl'] ?? _user!.profileImageUrl,
+        phone: updates['phone'] ?? _user!.phone,
+        bio: updates['bio'] ?? _user!.bio,
+        createdAt: _user!.createdAt,
+        premiumExpiry: _user!.premiumExpiry,
+      );
+
       notifyListeners();
     }
   }
@@ -108,7 +135,9 @@ class AuthProvider with ChangeNotifier {
           role: 'admin',
           username: _user!.username,
           notificationsEnabled: _user!.notificationsEnabled,
-          photoURL: _user!.photoURL,
+          profileImageUrl: _user!.profileImageUrl,
+          phone: _user!.phone,
+          bio: _user!.bio,
         );
       }
     }

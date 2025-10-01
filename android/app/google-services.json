@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "875998740711",
+    "project_id": "chronic-illness-app-dd39a",
+    "storage_bucket": "chronic-illness-app-dd39a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:875998740711:android:4ea84c9719603022c62242",
+        "android_client_info": {
+          "package_name": "com.company.chronic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "875998740711-01dkeh6qcdlptd9a75alm5cb9hsjv28u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGllZi24FlF7fr7P2Tog01Nk-la5tDrCo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "875998740711-01dkeh6qcdlptd9a75alm5cb9hsjv28u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

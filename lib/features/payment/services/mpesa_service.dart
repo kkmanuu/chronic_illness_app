@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class MpesaService {
-  static const String _baseUrl = 'https://mpesa-server-icfv.onrender.com';
+  static const String _baseUrl = 'https://mpesa-server-4b3g.onrender.com';
   static const Duration _timeout = Duration(seconds: 30);
   static final Set<String> _activeRequests = <String>{}; // Track active requests
   static final Map<String, DateTime> _requestTimestamps = <String, DateTime>{}; // Track request times

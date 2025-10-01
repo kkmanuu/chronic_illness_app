@@ -1,7 +1,66 @@
-# Flutter-related
-**/Flutter/ephemeral/
+# =========================
+# Flutter & Dart
+# =========================
+.dart_tool/
+.packages
+.pub/
+build/
+flutter_export_environment.sh
+
+# Lock files (optional, keep if you want reproducible builds)
+pubspec.lock
+
+# =========================
+# IDE / Editor
+# =========================
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*.DS_Store
+
+# =========================
+# Firebase
+# =========================
+firebase-debug.log
+**/serviceAccountKey.json
+.firebaserc
+.storage/
+
+# If you don’t want Firebase configs on GitHub
+firebase.json
+
+# =========================
+# Platform Specific
+# =========================
+# iOS
+ios/Flutter/Flutter.framework/
+ios/Flutter/Flutter.podspec
+ios/.symlinks/
+ios/DerivedData/
+ios/Runner.xcworkspace/
+ios/Pods/
 **/Pods/
 
-# Xcode-related
+# Android
+android/.gradle/
+android/app/build/
+
+# macOS
+macos/Pods/
+
+# Linux / Windows (Flutter desktop)
+linux/flutter/
+windows/flutter/
+
+# =========================
+# Xcode-related (already in your file)
+# =========================
 **/dgph
 **/xcuserdata/
+
+# =========================
+# Flutter ephemeral files (already in your file)
+# =========================
+**/Flutter/ephemeral/

@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 
+
+// MedicationScheduleScreen is a StatefulWidget for managing medication schedules
 class MedicationScheduleScreen extends StatefulWidget {
   static const routeName = '/medications';
   const MedicationScheduleScreen({super.key});
@@ -46,7 +48,7 @@ class _MedicationScheduleScreenState extends State<MedicationScheduleScreen>
     _startImageRotation();
     _checkConnectivity();
   }
-
+// Sets up animation controllers and their transitions
   void _setupAnimations() {
     _heroController = AnimationController(
       duration: const Duration(seconds: 2),

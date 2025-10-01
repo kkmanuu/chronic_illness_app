@@ -11,7 +11,6 @@ import 'package:chronic_illness_app/config/routes.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:chronic_illness_app/features/auth/services/export_service.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
@@ -24,25 +23,85 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+  int _currentImageIndex = 0;
+
+  // List of hero images with headings
+  final List<Map<String, String>> heroImages = [
+    {
+      'url': 'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg',
+      'heading': 'Health Tracking'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/356040/pexels-photo-356040.jpeg',
+      'heading': 'Wellness Journey'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/263402/pexels-photo-263402.jpeg',
+      'heading': 'Daily Progress'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/48604/pexels-photo-48604.jpeg',
+      'heading': 'Medical Care'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg',
+      'heading': 'Healthy Living'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/164455/pexels-photo-164455.jpeg',
+      'heading': 'Treatment Plan'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/3938022/pexels-photo-3938022.jpeg',
+      'heading': 'Health Monitoring'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/3845810/pexels-photo-3845810.jpeg',
+      'heading': 'Care Management'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/5726706/pexels-photo-5726706.jpeg',
+      'heading': 'Wellbeing Focus'
+    },
+    {
+      'url': 'https://images.pexels.com/photos/6129507/pexels-photo-6129507.jpeg',
+      'heading': 'Health Goals'
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Initialize AnimationController for slow sliding effect
+    // Initialize AnimationController for fade in/out effect
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20), // Slow animation over 20 seconds
-    )..repeat(reverse: true); // Repeat and reverse for continuous back-and-forth
+      duration: const Duration(seconds: 3), // 3 seconds for each image
+    )..repeat(reverse: false);
 
-    // Define sliding animation (horizontal movement)
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0), // Start position
-      end: const Offset(0.1, 0), // Slight movement to the right
+    // Define fade animation
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
     ).animate(CurvedAnimation(
       parent: _animationController,
-      curve: Curves.linear, // Smooth, continuous motion
+      curve: Curves.easeInOut,
     ));
+
+    // Change image every 5 seconds
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _animationController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        setState(() {
+          _currentImageIndex = (_currentImageIndex + 1) % heroImages.length;
+        });
+        _animationController.forward();
+      }
+    });
+
+    // Start the animation
+    _animationController.forward();
   }
 
   @override
@@ -63,20 +122,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     const cardColor = Colors.white;
     const accentColor = Color(0xFF2196F3);
 
-    // List of hero images (used for profile background)
-    final List<String> heroImages = [
-      'https://images.pexels.com/photos/40568/medical-appointment-doctor-healthcare-40568.jpeg',
-      'https://images.pexels.com/photos/356040/pexels-photo-356040.jpeg',
-      'https://images.pexels.com/photos/263402/pexels-photo-263402.jpeg',
-      'https://images.pexels.com/photos/48604/pexels-photo-48604.jpeg',
-      'https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg',
-      'https://images.pexels.com/photos/164455/pexels-photo-164455.jpeg',
-      'https://images.pexels.com/photos/3938022/pexels-photo-3938022.jpeg',
-      'https://images.pexels.com/photos/3845810/pexels-photo-3845810.jpeg',
-      'https://images.pexels.com/photos/5726706/pexels-photo-5726706.jpeg',
-      'https://images.pexels.com/photos/6129507/pexels-photo-6129507.jpeg',
-    ];
-
     if (authProvider.user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacementNamed(context, AppRoutes.login);
@@ -92,21 +137,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 250, // Increased height for a larger profile section
+            expandedHeight: 250,
             floating: false,
             pinned: true,
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 children: [
-                  // Animated background image
+                  // Fading background images
                   AnimatedBuilder(
                     animation: _animationController,
                     builder: (context, child) {
-                      return Transform.translate(
-                        offset: _slideAnimation.value,
+                      return Opacity(
+                        opacity: _fadeAnimation.value,
                         child: CachedNetworkImage(
-                          imageUrl: heroImages[0], // Using the first hero image
+                          imageUrl: heroImages[_currentImageIndex]['url']!,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
@@ -137,13 +182,61 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withOpacity(0.4), // Slightly darker for contrast
+                          Colors.black.withOpacity(0.5),
                           Colors.transparent,
-                          Colors.black.withOpacity(0.2),
+                          Colors.black.withOpacity(0.3),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
+                    ),
+                  ),
+                  // Image heading text
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    child: AnimatedBuilder(
+                      animation: _animationController,
+                      builder: (context, child) {
+                        return Opacity(
+                          opacity: _fadeAnimation.value,
+                          child: Text(
+                            heroImages[_currentImageIndex]['heading']!,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 10,
+                                  color: Colors.black54,
+                                  offset: Offset(2, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  // Image indicator dots
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: Row(
+                      children: List.generate(heroImages.length, (index) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentImageIndex == index
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.5),
+                          ),
+                        );
+                      }),
                     ),
                   ),
                 ],
@@ -156,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Text(
                   _getGreeting(),
                   style: const TextStyle(
-                    fontSize: 16, // Slightly larger for better readability
+                    fontSize: 16,
                     color: Colors.white70,
                     fontWeight: FontWeight.w400,
                   ),
@@ -164,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Text(
                   authProvider.user?.username ?? "User",
                   style: const TextStyle(
-                    fontSize: 22, // Slightly larger to match increased container
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -175,14 +268,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Container(
                 margin: const EdgeInsets.only(right: 16),
                 child: CircleAvatar(
-                  radius: 26, // Slightly larger avatar to match increased height
+                  radius: 26,
                   backgroundColor: Colors.white.withOpacity(0.2),
                   child: CircleAvatar(
                     radius: 24,
-                    backgroundImage: authProvider.user?.photoURL != null
-                        ? NetworkImage(authProvider.user!.photoURL!)
+                    backgroundImage: authProvider.user?.profileImageUrl != null
+                        ? NetworkImage(authProvider.user!.profileImageUrl!)
                         : null,
-                    child: authProvider.user?.photoURL == null
+                    child: authProvider.user?.profileImageUrl == null
                         ? const Icon(Icons.person, color: Colors.white, size: 26)
                         : null,
                   ),
@@ -887,27 +980,9 @@ This is an automated emergency notification.
     try {
       if (await canLaunchUrl(emailLaunchUri)) {
         await launchUrl(emailLaunchUri);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Opening emergency email...'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not launch email app. Please check your email configuration.'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Silently handle the error without showing a SnackBar
     }
   }
 }
