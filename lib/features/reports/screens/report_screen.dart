@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ReportScreen extends StatefulWidget {
+  // Static route name for navigation
   static const routeName = '/reports';
   const ReportScreen({super.key});
 
@@ -16,14 +17,17 @@ class ReportScreen extends StatefulWidget {
   _ReportScreenState createState() => _ReportScreenState();
 }
 
+// State class for ReportScreen with animation capabilities
 class _ReportScreenState extends State<ReportScreen>
     with SingleTickerProviderStateMixin {
-  bool _isExporting = false;
-  String _selectedFilter = 'All';
-  late AnimationController _animationController;
+  // State variables
+  bool _isExporting = false; 
+  String _selectedFilter = 'All'; 
+  late AnimationController _animationController; 
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+  // Available filter options for readings
   final List<String> _filterOptions = [
     'All',
     'Last 7 Days',
@@ -34,9 +38,11 @@ class _ReportScreenState extends State<ReportScreen>
   @override
   void initState() {
     super.initState();
+    // Initialize animations when widget is created
     _initializeAnimations();
   }
 
+  // animation controller and animations
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -59,15 +65,18 @@ class _ReportScreenState extends State<ReportScreen>
       curve: Curves.easeOutCubic,
     ));
 
+    // Start the animations
     _animationController.forward();
   }
 
   @override
   void dispose() {
+    // Clean up animation controller
     _animationController.dispose();
     super.dispose();
   }
 
+  // Filter readings based on selected time range
   List<ReadingModel> _filterReadings(List<ReadingModel> readings) {
     switch (_selectedFilter) {
       case 'Last 7 Days':
@@ -89,6 +98,7 @@ class _ReportScreenState extends State<ReportScreen>
     }
   }
 
+  // Check if user has exceeded export limit for non-premium accounts
   Future<bool> _checkExportLimit(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.user!.role == 'premium') return true;
@@ -103,6 +113,7 @@ class _ReportScreenState extends State<ReportScreen>
       int exportCount = data['exportCount'] ?? 0;
 
       if (exportCount >= maxExports) {
+        // Show dialog when export limit is reached
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -165,6 +176,7 @@ class _ReportScreenState extends State<ReportScreen>
     } catch (e) {
       debugPrint('Error checking export limit: $e');
       if (mounted) {
+        // Show error snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -185,12 +197,14 @@ class _ReportScreenState extends State<ReportScreen>
     }
   }
 
+  // Export readings to CSV file
   Future<void> _exportReport(BuildContext context,
       {List<ReadingModel>? readings, ReadingModel? singleReading}) async {
     if (_isExporting) return;
 
     if ((readings == null || readings.isEmpty) && singleReading == null) {
       if (mounted) {
+        // Show warning snackbar when no readings are available
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Row(
@@ -228,6 +242,7 @@ class _ReportScreenState extends State<ReportScreen>
       debugPrint('Export successful: $filePath');
 
       if (authProvider.user!.role != 'premium') {
+        // Update export count for non-premium users
         await docRef.set(
           {
             'exportCount': FieldValue.increment(1),
@@ -238,6 +253,7 @@ class _ReportScreenState extends State<ReportScreen>
       }
 
       if (mounted) {
+        // Show success snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -258,6 +274,7 @@ class _ReportScreenState extends State<ReportScreen>
     } catch (e) {
       debugPrint('Export error: $e');
       if (mounted) {
+        // Show error snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -284,9 +301,11 @@ class _ReportScreenState extends State<ReportScreen>
     }
   }
 
+  // Build statistics card summarizing health metrics
   Widget _buildStatsCard(List<ReadingModel> readings) {
     if (readings.isEmpty) return const SizedBox.shrink();
 
+    // Calculate average metrics
     final avgBloodSugar = readings.map((r) => r.bloodSugar).reduce((a, b) => a + b) / readings.length;
     final avgSystolic = readings.map((r) => r.systolicBP).reduce((a, b) => a + b) / readings.length;
     final avgDiastolic = readings.map((r) => r.diastolicBP).reduce((a, b) => a + b) / readings.length;
@@ -374,6 +393,7 @@ class _ReportScreenState extends State<ReportScreen>
     );
   }
 
+  // Build individual stat item for the stats card
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -406,6 +426,7 @@ class _ReportScreenState extends State<ReportScreen>
     );
   }
 
+  // Build filter chips for selecting time range
   Widget _buildFilterChips() {
     return Container(
       height: 60,
@@ -454,16 +475,19 @@ class _ReportScreenState extends State<ReportScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Access providers for authentication and readings
     final authProvider = Provider.of<AuthProvider>(context);
     final readingProvider = Provider.of<ReadingProvider>(context);
     const primaryColor = Color(0xFF4CAF50);
     const backgroundColor = Color(0xFFF8FFFE);
 
+    // Build the main scaffold
     return Scaffold(
       backgroundColor: backgroundColor,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
+          // App bar with gradient and export action
           SliverAppBar(
             expandedHeight: 120,
             floating: false,
@@ -528,10 +552,12 @@ class _ReportScreenState extends State<ReportScreen>
               children: [
                 const SizedBox(height: 16),
                 _buildFilterChips(),
+                // StreamBuilder to handle real-time reading updates
                 StreamBuilder<List<ReadingModel>>(
                   stream: readingProvider.getReadingsStream(authProvider.user!.uid),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
+                      // Show loading indicator
                       return Container(
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(40),
@@ -565,6 +591,7 @@ class _ReportScreenState extends State<ReportScreen>
                     }
                     
                     if (snapshot.hasError) {
+                      // Show error state
                       return Container(
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(20),
@@ -623,6 +650,7 @@ class _ReportScreenState extends State<ReportScreen>
                     final filteredReadings = _filterReadings(allReadings);
                     
                     if (allReadings.isEmpty) {
+                      // Show empty state
                       return Container(
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(40),
@@ -695,6 +723,7 @@ class _ReportScreenState extends State<ReportScreen>
                     }
 
                     if (filteredReadings.isEmpty) {
+                      // Show empty filter state
                       return Container(
                         margin: const EdgeInsets.all(16),
                         padding: const EdgeInsets.all(40),
@@ -767,6 +796,7 @@ class _ReportScreenState extends State<ReportScreen>
               ],
             ),
           ),
+          // List of readings
           StreamBuilder<List<ReadingModel>>(
             stream: readingProvider.getReadingsStream(authProvider.user!.uid),
             builder: (context, snapshot) {
@@ -938,6 +968,7 @@ class _ReportScreenState extends State<ReportScreen>
           ),
         ],
       ),
+      // Floating action button for upgrading to premium
       floatingActionButton: authProvider.user!.role != 'premium'
           ? FloatingActionButton.extended(
               onPressed: () {
@@ -958,6 +989,7 @@ class _ReportScreenState extends State<ReportScreen>
     );
   }
 
+  // Determine color based on reading status
   Color _getReadingStatusColor(ReadingModel reading) {
     final isHighBloodSugar = reading.bloodSugar > 180;
     final isLowBloodSugar = reading.bloodSugar < 70;
@@ -970,6 +1002,7 @@ class _ReportScreenState extends State<ReportScreen>
     return Colors.green;
   }
 
+  // Determine icon based on reading status
   IconData _getReadingStatusIcon(ReadingModel reading) {
     final isHighBloodSugar = reading.bloodSugar > 180;
     final isLowBloodSugar = reading.bloodSugar < 70;
@@ -982,6 +1015,7 @@ class _ReportScreenState extends State<ReportScreen>
     return Icons.check_circle_outline;
   }
 
+  // Build mini metric widget for list items
   Widget _buildMiniMetric(String label, String value, IconData icon) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1012,6 +1046,7 @@ class _ReportScreenState extends State<ReportScreen>
     );
   }
 
+  // Show detailed bottom sheet for a reading
   void _showReadingDetails(BuildContext context, ReadingModel reading) {
     showModalBottomSheet(
       context: context,
@@ -1106,6 +1141,7 @@ class _ReportScreenState extends State<ReportScreen>
     );
   }
 
+  // Build detail item for bottom sheet
   Widget _buildDetailItem(String label, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
