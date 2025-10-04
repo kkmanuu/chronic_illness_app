@@ -128,7 +128,7 @@ class PaymentProvider with ChangeNotifier {
   // Optimized polling with faster initial checks
   void _startOptimizedPolling(BuildContext context, String checkoutRequestId) {
     _pollingAttempts = 0;
-    const maxAttempts = 30; // 2.5 minutes total
+    const maxAttempts = 30; 
     
     _pollingTimer?.cancel();
     
