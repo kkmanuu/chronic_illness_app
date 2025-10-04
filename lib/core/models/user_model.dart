@@ -75,3 +75,4 @@ class UserModel {
     return UserModel.fromDocument(doc.id, data);
   }
 }
+
