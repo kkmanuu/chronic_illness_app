@@ -5,11 +5,11 @@ class PaymentModel {
   final String phoneNumber;
   final String amount;
   final String status;
-  final String transactionDesc; // Using checkoutRequestId or description
-  final DateTime createdAt; // Using transactionDate
-  final String? subscriptionStatus; // Derived from role or premiumExpiry
-  final DateTime? subscriptionStartDate; // Derived from premiumUpdatedAt
-  final DateTime? subscriptionExpiryDate; // Using premiumExpiry
+  final String transactionDesc;
+  final DateTime createdAt;
+  final String? subscriptionStatus;
+  final DateTime? subscriptionStartDate; 
+  final DateTime? subscriptionExpiryDate; 
   final String? mpesaReceiptNumber;
   final String? checkoutRequestId;
   final String? merchantRequestId;
